@@ -7,7 +7,7 @@ import pandas as pd
 from plotly.offline import init_notebook_mode, iplot
 
 
-from _backend import *
+from backend import *
 
 #DATA
 products = pd.read_csv('./files/product_categories.csv')

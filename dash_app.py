@@ -4,6 +4,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.offline as pyo
+
 from backend import AppBackend 
 
 engine = AppBackend()
@@ -25,7 +29,10 @@ SIDEBAR_STYLE = {
 global global_n_clicks, shopping_list
 
 shopping_list = []
-global_n_clicks  = 0
+global_n_clicks  = {
+    "add": None,
+    "run": None
+}
 
 # the styles for the main content position it to the right of the sidebar and
 # add some padding.
@@ -64,8 +71,9 @@ sidebar = html.Div(
         ),
         html.Button("Add Product",id='add-btn',disabled=False),
         html.P(
-            "Select a Product", className="lead", id="shopping-list"
+            "", className="lead", id="shopping-list"
         ),
+        html.Button("Optimize",id='run-btn',disabled=False),
         dbc.Nav(
             [
                 dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
@@ -84,35 +92,35 @@ content = html.Div(id="page-content", style=CONTENT_STYLE)
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 
-# this callback uses the current pathname to set the active state of the
-# corresponding nav link to true, allowing users to tell see page they are on
-@app.callback(
-    [Output(f"page-{i}-link", "active") for i in range(1, 4)],
-    [Input("url", "pathname")],
-)
-def toggle_active_links(pathname):
-    if pathname == "/":
-        # Treat page 1 as the homepage / index
-        return True, False, False
-    return [pathname == f"/page-{i}" for i in range(1, 4)]
+# # this callback uses the current pathname to set the active state of the
+# # corresponding nav link to true, allowing users to tell see page they are on
+# @app.callback(
+#     [Output(f"page-{i}-link", "active") for i in range(1, 4)],
+#     [Input("url", "pathname")],
+# )
+# def toggle_active_links(pathname):
+#     if pathname == "/":
+#         # Treat page 1 as the homepage / index
+#         return True, False, False
+#     return [pathname == f"/page-{i}" for i in range(1, 4)]
 
 
-@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def render_page_content(pathname):
-    if pathname in ["/", "/page-1"]:
-        return html.P("This is the content of page 1!")
-    elif pathname == "/page-2":
-        return html.P("This is the content of page 2. Yay!")
-    elif pathname == "/page-3":
-        return html.P("Oh cool, this is page 3!")
-    # If the user tries to reach a different page, return a 404 message
-    return dbc.Jumbotron(
-        [
-            html.H1("404: Not found", className="text-danger"),
-            html.Hr(),
-            html.P(f"The pathname {pathname} was not recognised..."),
-        ]
-    )
+# @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+# def render_page_content(pathname):
+#     if pathname in ["/", "/page-1"]:
+#         return html.P("This is the content of page 1!")
+#     elif pathname == "/page-2":
+#         return html.P("This is the content of page 2. Yay!")
+#     elif pathname == "/page-3":
+#         return html.P("Oh cool, this is page 3!")
+#     # If the user tries to reach a different page, return a 404 message
+#     return dbc.Jumbotron(
+#         [
+#             html.H1("404: Not found", className="text-danger"),
+#             html.Hr(),
+#             html.P(f"The pathname {pathname} was not recognised..."),
+#         ]
+#     )
 
 @app.callback(
     Output('products-dropdown', 'options'),
@@ -124,23 +132,73 @@ def update_output(category):
     return [{"label":product,"value":product} for product in products]
 
 @app.callback(
-    Output('shopping-list', 'children'),
+    [Output('shopping-list', 'children'), Output('run-btn', 'disabled')],
     [Input('add-btn', 'n_clicks'),Input('products-dropdown', 'value')]
 )
 def update_shopping_list(n_clicks,value):
     global global_n_clicks
-
-    if global_n_clicks == n_clicks or value == 'Seleccione un Producto':
-        return ""
+    
+    print(global_n_clicks["add"], n_clicks)
+    if global_n_clicks["add"] == n_clicks or value == "Seleccione un Producto":
+        return "", len(shopping_list) <= 2
     else:
-        global_n_clicks = n_clicks
+    
+        global_n_clicks["add"] = n_clicks
         if value in shopping_list:
-            return "Seleccione un producto diferente"
+            print(len(shopping_list))
+            return "Seleccione un producto diferente", len(shopping_list) <= 2
         else:        
             shopping_list.append(value)
             print(shopping_list)
-            return "Producto Agregado"
+            print(len(shopping_list))
+            return "Producto Agregado", len(shopping_list) <= 2
 
+@app.callback(
+    Output('page-content', 'children'),
+    [Input('run-btn', 'n_clicks'),Input('run-btn', 'disabled')]
+)
+def optimize(n_clicks,disabled):
+    global global_n_clicks
+
+    if not(disabled) and global_n_clicks["run"]!=n_clicks:
+        global_n_clicks["run"] = n_clicks
+
+        description = engine.describe_shopping_list(shopping_list)
+
+        fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values())
+        fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":0})
+
+        sorted_shopping_list = engine.sort_shopping_list(shopping_list)
+        
+        content = [
+            html.P(
+                "Number of different products: {}".format(description["n_items"]), className="lead"
+            ),
+            html.P(
+                "number of different level 1 categories: {}".format(description["n_cat1"]), className="lead"
+            ),
+            html.P(
+                "number of different level 2 categories: {}".format(description["n_cat2"]), className="lead"
+            ),
+            html.P(
+                "number of different level 3 categories: {}".format(description["n_cat3"]), className="lead"
+            ),
+            html.P(
+                "Estimated picking time: {}".format(description["estimated_time"]), className="lead"
+            ),
+            dcc.Graph(
+                id = 'marginal-plot',
+                figure = fig
+            ),
+            html.P(
+                "Sorted Shopping list: {}".format(sorted_shopping_list), className="lead"
+            ),
+            html.P(
+                "Estimited time for sorted shopping ist: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="lead"
+            ),
+        ]
+        return content
+    return ""
 
 
 if __name__ == "__main__":

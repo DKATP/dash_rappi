@@ -17,11 +17,11 @@ class AppBackend(object):
     def get_eda(self):
         pass
 
-    def get_stimated_shoping_time(self, shopping_list, agg=False):
+    def get_estimated_shoping_time(self, shopping_list, agg=False):
         if agg:
             max_value = round(random()+randint(0,100),2)
             x = np.arange(len(shopping_list))
-            y = max_value*(1-np.exp(-x/int(len(shopping_list)*.2)))
+            y = max_value*(1-np.exp(-x/round(len(shopping_list)*.2)))
             y[-1] = max_value
             return max_value,zip(shopping_list,y.tolist())
         else:
@@ -62,13 +62,13 @@ class AppBackend(object):
                 """.format(products_id=",".join(products_id))
         counts = self.__get_df_from_query(query=query)
         print(counts["c1"][0])
-        stimated_time,marginal_plot = self.get_stimated_shoping_time(shopping_list,agg=True)
+        estimated_time,marginal_plot = self.get_estimated_shoping_time(shopping_list,agg=True)
 
         return {"n_items": len(shopping_list),
                 "n_cat1": counts["c1"][0],
                 "n_cat2": counts["c2"][0],
                 "n_cat3": counts["c3"][0],
-                "stimated_time": stimated_time,
+                "estimated_time": estimated_time,
                 "marginal_plot": dict(marginal_plot)}
 
 

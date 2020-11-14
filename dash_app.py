@@ -3,10 +3,12 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+import pandas as pd
 
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.offline as pyo
+import plotly.figure_factory as ff
 
 from backend import AppBackend 
 
@@ -74,15 +76,15 @@ sidebar = html.Div(
             "", className="lead", id="shopping-list"
         ),
         html.Button("Optimize",id='run-btn',disabled=False),
-        dbc.Nav(
-            [
-                dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
-                dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
-                dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
-            ],
-            vertical=True,
-            pills=True,
-        ),
+        # dbc.Nav(
+        #     [
+        #         dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
+        #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
+        #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
+        #     ],
+        #     vertical=True,
+        #     pills=True,
+        # ),
     ],
     style=SIDEBAR_STYLE,
 )
@@ -169,33 +171,65 @@ def optimize(n_clicks,disabled):
         fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":0})
 
         sorted_shopping_list = engine.sort_shopping_list(shopping_list)
-        
+      
+        df1=pd.DataFrame({'ORDER RECEIVED':shopping_list})
+        fig2 =  ff.create_table(df1)
+        #fig.show()
+
+        df2=pd.DataFrame({'ORDER SORTED':sorted_shopping_list})
+        fig3 =  ff.create_table(df2)
+
         content = [
-            html.P(
-                "Number of different products: {}".format(description["n_items"]), className="lead"
-            ),
-            html.P(
-                "number of different level 1 categories: {}".format(description["n_cat1"]), className="lead"
-            ),
-            html.P(
-                "number of different level 2 categories: {}".format(description["n_cat2"]), className="lead"
-            ),
-            html.P(
-                "number of different level 3 categories: {}".format(description["n_cat3"]), className="lead"
-            ),
-            html.P(
-                "Estimated picking time: {}".format(description["estimated_time"]), className="lead"
-            ),
+            html.H3("ORDER RESUME", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            dbc.Row([ 
+              dbc.Col([
+                html.P(
+                    "Number of different products: {}".format(description["n_items"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                ),
+                html.P(
+                    "   Number of categories L1: {}".format(description["n_cat1"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                ),
+                html.P(
+                    "     Number of categories L2: {}".format(description["n_cat2"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                ),
+                html.P(
+                    "       Number of categories L3: {}".format(description["n_cat3"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                ),
+              ]),
+            ]),
+            html.H3("INITIAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            dbc.Row([  
+              dbc.Col([ 
+                  dcc.Graph(
+                      figure = fig2
+                  ),
+              ]),           
+              dbc.Col([
+                  dbc.Alert(
+                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-5", color="primary"#, style={'height':'100px','widht':'15%','backgroundColor':'yellow', 'vertical-align':'middle'} 
+                      ),
+              ]), 
+            ]),    
+            html.H3("TIMELINE BY PRODUCT", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),  
             dcc.Graph(
                 id = 'marginal-plot',
                 figure = fig
             ),
-            html.P(
-                "Sorted Shopping list: {}".format(sorted_shopping_list), className="lead"
-            ),
-            html.P(
-                "Estimited time for sorted shopping ist: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="lead"
-            ),
+            html.H3("FINAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            dbc.Row([
+              dbc.Col([           
+                dcc.Graph(
+                figure = fig3
+            #html.P(
+             #   "Sorted Shopping list: {}".format(sorted_shopping_list), className="lead"
+                ),
+            ]),
+              dbc.Col([
+                dbc.Alert(
+                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-5", color="warning"
+              ),
+              ]),
+            ]),
         ]
         return content
     return ""

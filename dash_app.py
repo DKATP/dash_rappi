@@ -14,7 +14,7 @@ from backend import AppBackend
 
 engine = AppBackend()
 
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], title="RappiProject")
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
@@ -33,7 +33,8 @@ global global_n_clicks, shopping_list
 shopping_list = []
 global_n_clicks  = {
     "add": None,
-    "run": None
+    "run": None,
+    "clean": None
 }
 
 # the styles for the main content position it to the right of the sidebar and
@@ -84,23 +85,20 @@ sidebar = html.Div(
           dbc.Row([
 
               dbc.Col([
-                  html.Button("Optimize Order",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
+                  html.Button("Send",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
               ]),
               dbc.Col([
-                  html.Button("New Order",disabled=True, style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
+                  html.Button("Clean",id='clean-btn', style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
 
               
               ]),
           ]),    
+          
           dbc.Row([  
                   dbc.Nav(
                       [
                           dbc.NavLink("Product Category Analysis", href="/page-1", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
-                  #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
-                  #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
                       ],
-                  #     vertical=True,
-                  #     pills=True,
                   ),
 
 
@@ -156,17 +154,22 @@ def update_output(category):
 
 @app.callback(
     [Output('shopping-list', 'figure'), Output('user-msg', 'children'), Output('run-btn', 'disabled')],
-    [Input('add-btn', 'n_clicks'),Input('products-dropdown', 'value')]
+    [Input('add-btn', 'n_clicks'),Input('products-dropdown', 'value'),Input('clean-btn', 'n_clicks')]
 )
-def update_shopping_list(n_clicks,value):
-    global global_n_clicks
-    
+def update_shopping_list(n_clicks,value,n_clicks_clean):
+    global global_n_clicks, shopping_list
+
     if global_n_clicks["add"] == n_clicks or value == "Seleccione un Producto":
+        if global_n_clicks["clean"] != n_clicks_clean:
+            global_n_clicks["clean"] = n_clicks_clean
+            shopping_list = []
+            fig =  ff.create_table(pd.DataFrame({"SHOPPING LIST":["Please add at least 3 products"]}))
+            return fig,"", len(shopping_list) <= 2
+
         if len(shopping_list) == 0:
-            fig =  pd.DataFrame({"Shopping List":["Please add at least 3 products"]})
+            fig =  ff.create_table(pd.DataFrame({"SHOPPING LIST":["Please add at least 3 products"]}))
         else:
-            df = pd.DataFrame({"SOPPING LIST":shopping_list})
-            print(df)
+            df = pd.DataFrame({"SHOPPING LIST":shopping_list})
             fig =  ff.create_table(df)
         return fig,"", len(shopping_list) <= 2
     else:
@@ -179,7 +182,7 @@ def update_shopping_list(n_clicks,value):
             return fig,"Please select a different product", len(shopping_list) <= 2
         else:        
             shopping_list.append(value)
-            fig =  ff.create_table(pd.DataFrame({"SOPPING LIST":shopping_list}))
+            fig =  ff.create_table(pd.DataFrame({"SHOPPING LIST":shopping_list}))
             return fig,"", len(shopping_list) <= 2
 
 @app.callback(

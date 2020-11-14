@@ -180,7 +180,7 @@ def optimize(n_clicks,disabled):
         fig3 =  ff.create_table(df2)
 
         content = [
-            html.H3("ORDER RESUME", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            html.H3("ORDER RESUME", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
             dbc.Row([ 
               dbc.Col([
                 html.P(
@@ -195,9 +195,9 @@ def optimize(n_clicks,disabled):
                 html.P(
                     "       Number of categories L3: {}".format(description["n_cat3"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
                 ),
-              ]),
+              ], style={'border': '2px solid black', 'border-radius': '8px','margin-right':'400px','margin-left': '400px', 'margin-bottom':'30px','background-color':'lightyellow'}),
             ]),
-            html.H3("INITIAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            html.H3("INITIAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
             dbc.Row([  
               dbc.Col([ 
                   dcc.Graph(
@@ -206,16 +206,16 @@ def optimize(n_clicks,disabled):
               ]),           
               dbc.Col([
                   dbc.Alert(
-                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-5", color="primary"#, style={'height':'100px','widht':'15%','backgroundColor':'yellow', 'vertical-align':'middle'} 
+                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-4.5", color="primary", style={'backgroundColor':'red','textAlign':'center','font-weight':'bold'} 
                       ),
-              ]), 
-            ]),    
-            html.H3("TIMELINE BY PRODUCT", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),  
+              ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}), 
+            ], style={'margin-bottom':'30px'}),    
+            html.H3("TIMELINE BY PRODUCT", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),  
             dcc.Graph(
                 id = 'marginal-plot',
                 figure = fig
             ),
-            html.H3("FINAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fd624f','opacity':'0.6'}),
+            html.H3("FINAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
             dbc.Row([
               dbc.Col([           
                 dcc.Graph(
@@ -226,9 +226,9 @@ def optimize(n_clicks,disabled):
             ]),
               dbc.Col([
                 dbc.Alert(
-                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-5", color="warning"
+                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-4.5", color="primary", style={'backgroundColor':'green','textAlign':'center','font-weight':'bold'} 
               ),
-              ]),
+              ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}),
             ]),
         ]
         return content

@@ -97,7 +97,7 @@ sidebar = html.Div(
           dbc.Row([  
                   dbc.Nav(
                       [
-                          dbc.NavLink("Product Category Analysis", href="/page-1", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
+                          dbc.NavLink("Product Category Analysis", href="/cat_analysis", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
                       ],
                   ),
 
@@ -187,9 +187,9 @@ def update_shopping_list(n_clicks,value,n_clicks_clean):
 
 @app.callback(
     Output('page-content', 'children'),
-    [Input('run-btn', 'n_clicks'),Input('run-btn', 'disabled')]
+    [Input('run-btn', 'n_clicks'),Input('run-btn', 'disabled'),Input("url", "pathname")]
 )
-def optimize(n_clicks,disabled):
+def optimize(n_clicks,disabled,pathname):
     global global_n_clicks
 
     if not(disabled) and global_n_clicks["run"]!=n_clicks:
@@ -262,6 +262,9 @@ def optimize(n_clicks,disabled):
             ]),
         ]
         return content
+    
+    if pathname == "/cat_analysis":
+        return "Graficas"
     return ""
 
 

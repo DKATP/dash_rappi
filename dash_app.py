@@ -73,18 +73,39 @@ sidebar = html.Div(
         ),
         html.Button("Add Product",id='add-btn',disabled=False),
         html.P(
-            "", className="lead", id="shopping-list"
+            "", className="lead", id="user-msg"
         ),
-        html.Button("Optimize",id='run-btn',disabled=False),
-        # dbc.Nav(
-        #     [
-        #         dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
-        #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
-        #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
-        #     ],
-        #     vertical=True,
-        #     pills=True,
-        # ),
+        dcc.Graph(
+            id = 'shopping-list',
+            figure = ff.create_table(pd.DataFrame({"Shopping List":["Please add at least 3 products"]}))
+        ),
+        dbc.Row([ 
+
+          dbc.Row([
+
+              dbc.Col([
+                  html.Button("Optimize Order",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
+              ]),
+              dbc.Col([
+                  html.Button("New Order",disabled=True, style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
+
+              
+              ]),
+          ]),    
+          dbc.Row([  
+                  dbc.Nav(
+                      [
+                          dbc.NavLink("Product Category Analysis", href="/page-1", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
+                  #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
+                  #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
+                      ],
+                  #     vertical=True,
+                  #     pills=True,
+                  ),
+
+
+          ]),
+        ], style={'border': '3px solid black', 'border-radius': '8px','margin-top':'100px'}),  
     ],
     style=SIDEBAR_STYLE,
 )
@@ -96,7 +117,7 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 # # this callback uses the current pathname to set the active state of the
 # # corresponding nav link to true, allowing users to tell see page they are on
-# @app.callback(
+#@app.callback(
 #     [Output(f"page-{i}-link", "active") for i in range(1, 4)],
 #     [Input("url", "pathname")],
 # )
@@ -134,26 +155,32 @@ def update_output(category):
     return [{"label":product,"value":product} for product in products]
 
 @app.callback(
-    [Output('shopping-list', 'children'), Output('run-btn', 'disabled')],
+    [Output('shopping-list', 'figure'), Output('user-msg', 'children'), Output('run-btn', 'disabled')],
     [Input('add-btn', 'n_clicks'),Input('products-dropdown', 'value')]
 )
 def update_shopping_list(n_clicks,value):
     global global_n_clicks
     
-    print(global_n_clicks["add"], n_clicks)
     if global_n_clicks["add"] == n_clicks or value == "Seleccione un Producto":
-        return "", len(shopping_list) <= 2
+        if len(shopping_list) == 0:
+            fig =  pd.DataFrame({"Shopping List":["Please add at least 3 products"]})
+        else:
+            df = pd.DataFrame({"SOPPING LIST":shopping_list})
+            print(df)
+            fig =  ff.create_table(df)
+        return fig,"", len(shopping_list) <= 2
     else:
-    
         global_n_clicks["add"] = n_clicks
         if value in shopping_list:
-            print(len(shopping_list))
-            return "Seleccione un producto diferente", len(shopping_list) <= 2
+            df = pd.DataFrame({"SHOPPING LIST":shopping_list})
+            print(df)
+            fig =  ff.create_table(df)
+
+            return fig,"Please select a different product", len(shopping_list) <= 2
         else:        
             shopping_list.append(value)
-            print(shopping_list)
-            print(len(shopping_list))
-            return "Producto Agregado", len(shopping_list) <= 2
+            fig =  ff.create_table(pd.DataFrame({"SOPPING LIST":shopping_list}))
+            return fig,"", len(shopping_list) <= 2
 
 @app.callback(
     Output('page-content', 'children'),

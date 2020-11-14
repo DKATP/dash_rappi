@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
+import base64
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -14,7 +15,8 @@ from backend import AppBackend
 
 engine = AppBackend()
 
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], title="RappiProject")
+
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
@@ -35,6 +37,7 @@ global_n_clicks  = {
     "add": None,
     "run": None,
     "clean": None
+
 }
 
 # the styles for the main content position it to the right of the sidebar and
@@ -48,6 +51,7 @@ CONTENT_STYLE = {
 sidebar = html.Div(
     [
         html.H3("Select your products", className="display-6"),
+        html.Img(src='/content/dash_rappi/Captura.png'),
         html.Hr(),
         html.P(
             "Please put together your shopping list with the products available below", className="lead"
@@ -85,20 +89,23 @@ sidebar = html.Div(
           dbc.Row([
 
               dbc.Col([
-                  html.Button("Send",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
+                  html.Button("Optimize Order",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
               ]),
               dbc.Col([
-                  html.Button("Clean",id='clean-btn', style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
+                  html.Button("New Order",id='clean-btn',disabled=False, style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
 
               
               ]),
           ]),    
-          
           dbc.Row([  
                   dbc.Nav(
                       [
-                          dbc.NavLink("Product Category Analysis", href="/cat_analysis", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
+                          dbc.NavLink("Product Category Analysis", href="/page-1", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
+                  #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
+                  #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
                       ],
+                  #     vertical=True,
+                  #     pills=True,
                   ),
 
 
@@ -236,7 +243,7 @@ def optimize(n_clicks,disabled,pathname):
               ]),           
               dbc.Col([
                   dbc.Alert(
-                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-4.5", color="primary", style={'backgroundColor':'red','textAlign':'center','font-weight':'bold'} 
+                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-4.5", color="primary", style={'backgroundColor':'#ff7152','textAlign':'center','font-weight':'bold'} 
                       ),
               ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}), 
             ], style={'margin-bottom':'30px'}),    
@@ -256,13 +263,13 @@ def optimize(n_clicks,disabled,pathname):
             ]),
               dbc.Col([
                 dbc.Alert(
-                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-4.5", color="primary", style={'backgroundColor':'green','textAlign':'center','font-weight':'bold'} 
+                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-4.5", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold'} 
               ),
               ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}),
             ]),
         ]
         return content
-    
+
     if pathname == "/cat_analysis":
         return "Graficas"
     return ""

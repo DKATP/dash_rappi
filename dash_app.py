@@ -4,7 +4,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
-import base64
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -50,8 +49,15 @@ CONTENT_STYLE = {
 
 sidebar = html.Div(
     [
-        html.H3("Select your products", className="display-6"),
-        html.Img(src='/content/dash_rappi/Captura.png'),
+        dbc.Row([ 
+          dbc.Col([
+            html.H3("Select your products", className="display-5.5", style={'margin-top':'50px', 'padding-bottom': '5px'}),
+          ], width={"size": 9, "order": "first"}),
+          dbc.Col([
+            html.Img(src=app.get_asset_url('favicon.ico'), style={"height" : "60%", 'padding-bottom': '5px'}),
+          ], width={"size": 3, "order": "last"}),
+        ], style={'height': '100px', 'margin-top':'-40px'}),  
+        
         html.Hr(),
         html.P(
             "Please put together your shopping list with the products available below", className="lead"
@@ -89,7 +95,7 @@ sidebar = html.Div(
           dbc.Row([
 
               dbc.Col([
-                  html.Button("Optimize Order",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
+                  html.Button("SEND LIST",id='run-btn',disabled=False, style={'margin-top':'20px','margin-left':'40px', 'padding': '20px', 'width': '180px', 'font-weight':'bold'}),
               ]),
               dbc.Col([
                   html.Button("New Order",id='clean-btn',disabled=False, style={'margin-top':'20px','margin-left':'30px', 'padding': '20px', 'width': '150px', 'font-weight':'bold'}),
@@ -100,7 +106,7 @@ sidebar = html.Div(
           dbc.Row([  
                   dbc.Nav(
                       [
-                          dbc.NavLink("Product Category Analysis", href="/page-1", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
+                          dbc.NavLink("Product Category Analysis", href="/cat_analysis", id="page-1-link", style={'margin-left':'130px', 'font-weight':'bold'}),
                   #         dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
                   #         dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
                       ],
@@ -110,7 +116,7 @@ sidebar = html.Div(
 
 
           ]),
-        ], style={'border': '3px solid black', 'border-radius': '8px','margin-top':'100px'}),  
+        ], style={'margin-top':'100px'}),#'border': '3px solid black', 'border-radius': '8px',}),  
     ],
     style=SIDEBAR_STYLE,
 )
@@ -118,37 +124,6 @@ sidebar = html.Div(
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
-
-
-# # this callback uses the current pathname to set the active state of the
-# # corresponding nav link to true, allowing users to tell see page they are on
-#@app.callback(
-#     [Output(f"page-{i}-link", "active") for i in range(1, 4)],
-#     [Input("url", "pathname")],
-# )
-# def toggle_active_links(pathname):
-#     if pathname == "/":
-#         # Treat page 1 as the homepage / index
-#         return True, False, False
-#     return [pathname == f"/page-{i}" for i in range(1, 4)]
-
-
-# @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-# def render_page_content(pathname):
-#     if pathname in ["/", "/page-1"]:
-#         return html.P("This is the content of page 1!")
-#     elif pathname == "/page-2":
-#         return html.P("This is the content of page 2. Yay!")
-#     elif pathname == "/page-3":
-#         return html.P("Oh cool, this is page 3!")
-#     # If the user tries to reach a different page, return a 404 message
-#     return dbc.Jumbotron(
-#         [
-#             html.H1("404: Not found", className="text-danger"),
-#             html.Hr(),
-#             html.P(f"The pathname {pathname} was not recognised..."),
-#         ]
-#     )
 
 @app.callback(
     Output('products-dropdown', 'options'),
@@ -204,7 +179,7 @@ def optimize(n_clicks,disabled,pathname):
 
         description = engine.describe_shopping_list(shopping_list)
 
-        fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values())
+        fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values(),template="plotly_white")
         fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":0})
 
         sorted_shopping_list = engine.sort_shopping_list(shopping_list)
@@ -217,24 +192,24 @@ def optimize(n_clicks,disabled,pathname):
         fig3 =  ff.create_table(df2)
 
         content = [
-            html.H3("ORDER RESUME", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
+            html.H3("ORDER RESUME", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1', 'border-bottom-style': 'solid'}),
             dbc.Row([ 
               dbc.Col([
                 html.P(
                     "Number of different products: {}".format(description["n_items"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
                 ),
                 html.P(
-                    "   Number of categories L1: {}".format(description["n_cat1"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                    "Number of categories L1: {}".format(description["n_cat1"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
                 ),
                 html.P(
-                    "     Number of categories L2: {}".format(description["n_cat2"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                    "Number of categories L2: {}".format(description["n_cat2"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
                 ),
                 html.P(
-                    "       Number of categories L3: {}".format(description["n_cat3"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
+                    "Number of categories L3: {}".format(description["n_cat3"]), className="lead", style={'textAlign':'center','font-weight':'bold'}
                 ),
               ], style={'border': '2px solid black', 'border-radius': '8px','margin-right':'400px','margin-left': '400px', 'margin-bottom':'30px','background-color':'lightyellow'}),
             ]),
-            html.H3("INITIAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
+            html.H3("INITIAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1', 'border-bottom-style': 'solid'}),
             dbc.Row([  
               dbc.Col([ 
                   dcc.Graph(
@@ -242,17 +217,18 @@ def optimize(n_clicks,disabled,pathname):
                   ),
               ]),           
               dbc.Col([
+                  html.P("Estimated picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold'}), 
                   dbc.Alert(
-                      "Estimated picking time: {}".format(description["estimated_time"]), className="display-4.5", color="primary", style={'backgroundColor':'#ff7152','textAlign':'center','font-weight':'bold'} 
+                      "{}".format(description["estimated_time"]), className="display-3", color="primary", style={'backgroundColor':'#ff7152','textAlign':'center','font-weight':'bold', 'height':'100px'} 
                       ),
-              ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}), 
+              ], style={'margin-top':'60px'}),#,'margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}), 
             ], style={'margin-bottom':'30px'}),    
-            html.H3("TIMELINE BY PRODUCT", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),  
+            html.H3("TIMELINE BY PRODUCT", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1', 'border-bottom-style': 'solid'}),  
             dcc.Graph(
                 id = 'marginal-plot',
                 figure = fig
             ),
-            html.H3("FINAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1'}),
+            html.H3("FINAL SHOPPING LIST", className="display-6", style={'textAlign':'center','font-weight':'bold','backgroundColor':'#fed8b1', 'border-bottom-style': 'solid'}),
             dbc.Row([
               dbc.Col([           
                 dcc.Graph(
@@ -262,16 +238,19 @@ def optimize(n_clicks,disabled,pathname):
                 ),
             ]),
               dbc.Col([
+                html.P("Estimated final picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold'}), 
                 dbc.Alert(
-                "Estimated time for final shopping list: {}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-4.5", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold'} 
+                "{}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'} 
               ),
-              ], style={'margin-top':'100px','margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}),
+              ], style={'margin-top':'60px'}),
             ]),
         ]
         return content
 
     if pathname == "/cat_analysis":
-        return "Graficas"
+        if pathname == "/cat_analysis":
+          fig5 = px.imshow(engine.get_eda())
+        return dcc.Graph(figure = fig5, style={'height': '800px'})
     return ""
 
 

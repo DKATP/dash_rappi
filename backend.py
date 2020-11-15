@@ -4,6 +4,9 @@ from random import shuffle, choice, random, randint
 import pandas as pd
 import numpy as np
 import json
+import ortools
+from ortools.constraint_solver import routing_enums_pb2
+from ortools.constraint_solver import pywrapcp
 
 class AppBackend(object):
     def __init__(self):
@@ -94,6 +97,115 @@ class AppBackend(object):
                 """.format(category=category)
         products = self.__get_df_from_query(query=query)
         return list(products.agg("{0[product_name]}-@-{0[product_id]}".format, axis=1))
+
+    def get_product_times(self):
+        query = """
+                SELECT * FROM PRODUCT_TIMES;
+                   """
+        query_cm = """
+                        SELECT * FROM CAT_MAP;
+                           """
+        prod_times = self.__get_df_from_query(query=query)
+        cat_map = self.__get_df_from_query(query=query_cm)
+
+        return prod_times, cat_map
+
+    def get_categories2_from_prods(self, shopping_list):
+        products_id = [str(int(float(product.split("-@-")[1]))) for product in shopping_list]
+        query = """
+                   SELECT DISTINCT cat2_name, product_id
+                   FROM  product_categories
+                   WHERE product_id IN ({products_id})
+                    """.format(products_id=",".join(products_id))
+        product_categories = self.__get_df_from_query(query=query)
+        return product_categories
+
+    # Creates the time(cost) matrix between products(nodes) and depot(value=0)
+    def create_time_matrix(self, map_cats_nodes, product_times, map_cats_filtered):
+        # sorted nodes
+        M = 10000000
+        nodes = list(map_cats_nodes.values())
+        nodes.append(0)
+        nodes = sorted(nodes)
+        dimension = len(nodes)
+        df = product_times[(product_times['cat2_name_x'].isin(map_cats_filtered)) &
+                           (product_times['cat2_name_y'].isin(map_cats_filtered))]
+        df = df.replace({'cat2_name_x': map_cats_nodes, 'cat2_name_y': map_cats_nodes})
+
+        # Initialize
+        matrix = np.full((dimension, dimension), M)
+
+        # Fill
+        for i, row in df.iterrows():
+            ind_x = int(row['cat2_name_x'])
+            ind_y = int(row['cat2_name_y'])
+            matrix[ind_x, ind_y] = row['item_time_y']
+
+        # dismiss the depot
+        matrix[:, 0] = 0
+        matrix[0, :] = 0
+
+        return matrix, nodes, map_cats_nodes
+
+    def solve_optimization(self, time_matrix):
+        # Create the routing index manager.
+        manager = pywrapcp.RoutingIndexManager(len(time_matrix), 1, 0)
+        # Create Routing Model.
+        routing = pywrapcp.RoutingModel(manager)
+
+        def distance_callback(from_index, to_index):
+            """Returns the distance between the two nodes."""
+            # Convert from routing variable Index to distance matrix NodeIndex.
+            from_node = manager.IndexToNode(from_index)
+            to_node = manager.IndexToNode(to_index)
+            return time_matrix[from_node][to_node]
+
+        transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+        routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+
+        def print_solution(manager, routing, solution):
+            """Prints solution on console."""
+            print('Objective: {} miles'.format(solution.ObjectiveValue()))
+            index = routing.Start(0)
+            plan_output = 'Picking route:\n'
+            route_distance = 0
+            list_answer = []
+            while not routing.IsEnd(index):
+                plan_output += ' {} ->'.format(manager.IndexToNode(index))
+                list_answer.append(manager.IndexToNode(index))
+                previous_index = index
+                index = solution.Value(routing.NextVar(index))
+                route_distance += routing.GetArcCostForVehicle(previous_index, index, 0)
+            plan_output += ' {}\n'.format(manager.IndexToNode(index))
+            print(plan_output)
+            plan_output += 'Picking time: {}seconds\n'.format(route_distance)
+            return list_answer, route_distance
+
+        solution = routing.SolveWithParameters(search_parameters)
+        if solution:
+            list_answer, route_distance = print_solution(manager, routing, solution)
+        else:
+            list_answer = range(len(time_matrix)).append(0)
+            route_distance = 95*len(time_matrix)
+        return list_answer, route_distance
+
+    def optimization_answer_processing(self, map_cats_filtered, product_times, cat_map):
+        print(cat_map)
+        map_cats_nodes = dict(zip(map_cats_filtered, range(1, len(map_cats_filtered) + 1)))
+        print(map_cats_nodes)
+        matrix, nodes, map_cats_nodes = self.create_time_matrix(map_cats_nodes, product_times, map_cats_filtered)
+        print(nodes)
+        list_answer, picking_time = self.solve_optimization(matrix)
+        order_map_cats = []
+        for i in list_answer:
+            for catm, nodem in map_cats_nodes.items():
+                if nodem == i:
+                    order_map_cats.append(catm)
+        print(order_map_cats)
+        return list_answer, picking_time
         
 if __name__ == "__main__":
     a = AppBackend()

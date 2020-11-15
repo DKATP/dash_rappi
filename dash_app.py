@@ -178,6 +178,12 @@ def optimize(n_clicks,disabled,pathname):
         global_n_clicks["run"] = n_clicks
 
         description = engine.describe_shopping_list(shopping_list)
+        product_times, cat_map = engine.get_product_times()
+        product_categories = engine.get_categories2_from_prods(shopping_list)
+        cats_2 = list(product_categories.cat2_name)
+        map_cats_filtered = list(cat_map[cat_map['cat2_name'].isin(cats_2)].map_value)
+        list_answer = engine.optimization_answer_processing(map_cats_filtered, product_times, cat_map)
+        print(list_answer)
 
         fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values(),template="plotly_white")
         fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":0})

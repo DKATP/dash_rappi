@@ -15,7 +15,12 @@ class AppBackend(object):
         return df
 
     def get_eda(self):
-        pass
+        query = """
+                    SELECT * FROM product_times;
+                """
+        data = self.__get_df_from_query(query)
+        data = data.pivot(index='cat2_name_x',columns='cat2_name_y',values='item_time_y')
+        return data
 
     def get_estimated_shoping_time(self, shopping_list, agg=False):
         if agg:

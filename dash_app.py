@@ -178,23 +178,22 @@ def optimize(n_clicks,disabled,pathname):
         global_n_clicks["run"] = n_clicks
 
         description = engine.describe_shopping_list(shopping_list)
+        print(shopping_list)
         product_times, cat_map = engine.get_product_times()
         product_categories = engine.get_categories2_from_prods(shopping_list)
         cats_2 = list(product_categories.cat2_name)
         map_cats_filtered = list(cat_map[cat_map['cat2_name'].isin(cats_2)].map_value)
-        list_answer = engine.optimization_answer_processing(map_cats_filtered, product_times, cat_map)
-        print(list_answer)
+        sorted_shopping_list, prods_picking_time = engine.optimization_answer_processing(shopping_list, map_cats_filtered, product_times, cat_map, product_categories)
+        print(sorted_shopping_list)
 
         fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values(),template="plotly_white")
         fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":0})
 
-        sorted_shopping_list = engine.sort_shopping_list(shopping_list)
-      
         df1=pd.DataFrame({'ORDER RECEIVED':shopping_list})
         fig2 =  ff.create_table(df1)
         #fig.show()
 
-        df2=pd.DataFrame({'ORDER SORTED':sorted_shopping_list})
+        df2=pd.DataFrame({'ORDER SORTED': sorted_shopping_list})
         fig3 =  ff.create_table(df2)
 
         content = [
@@ -246,7 +245,7 @@ def optimize(n_clicks,disabled,pathname):
               dbc.Col([
                 html.P("Estimated final picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold'}), 
                 dbc.Alert(
-                "{}".format(engine.get_estimated_shoping_time(sorted_shopping_list)), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'} 
+                "{}".format(int(sum(prods_picking_time))), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'}
               ),
               ], style={'margin-top':'60px'}),
             ]),

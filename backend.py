@@ -192,20 +192,51 @@ class AppBackend(object):
             route_distance = 95*len(time_matrix)
         return list_answer, route_distance
 
-    def optimization_answer_processing(self, map_cats_filtered, product_times, cat_map):
-        print(cat_map)
+    def optimization_answer_processing(self,shopping_list, map_cats_filtered, product_times, cat_map, product_categories):
+        prod_id_map = {}
+        for product in shopping_list:
+            prod_id = str(int(float(product.split("-@-")[1])))
+            prod_name = str(product.split("-@-")[0])
+            prod_id_map[prod_id] = prod_name
+
+        prod_cats = product_categories.merge(cat_map[cat_map['map_value'].isin(map_cats_filtered)], how='inner')
         map_cats_nodes = dict(zip(map_cats_filtered, range(1, len(map_cats_filtered) + 1)))
-        print(map_cats_nodes)
         matrix, nodes, map_cats_nodes = self.create_time_matrix(map_cats_nodes, product_times, map_cats_filtered)
-        print(nodes)
         list_answer, picking_time = self.solve_optimization(matrix)
         order_map_cats = []
         for i in list_answer:
             for catm, nodem in map_cats_nodes.items():
                 if nodem == i:
                     order_map_cats.append(catm)
-        print(order_map_cats)
-        return list_answer, picking_time
+        prods_answer = []
+        prods_picking_time = []
+        for i in order_map_cats:
+            for indexj, j in prod_cats.query("map_value==@i").iterrows():
+                prod_name = prod_id_map[str(int(j['product_id']))]
+                prods_answer.append(prod_name+"-@-"+str(j['product_id']))
+
+        prod_cats['map_value_cat'] = pd.Categorical(prod_cats['map_value'],
+                                                   categories = order_map_cats,
+                                                   ordered = True)
+        prod_cats = prod_cats.sort_values('map_value_cat')
+
+        row_iterator = prod_cats.iterrows()
+        _, last = row_iterator.__next__()  # take first item from row_iterator
+        for i, row in row_iterator:
+            prev = last['map_value']
+            next = row['map_value']
+            time = 60
+            try:
+                print(product_times.query("cat2_name_x==@prev & cat2_name_y==@next"))
+                time = product_times.query("cat2_name_x==@prev & cat2_name_y==@next").iloc[0]['item_time_y']
+            except:
+                print("not found")
+            prods_picking_time.append(time)
+            last = row
+
+        print(prods_answer)
+        print(prods_picking_time)
+        return prods_answer, prods_picking_time
         
 if __name__ == "__main__":
     a = AppBackend()

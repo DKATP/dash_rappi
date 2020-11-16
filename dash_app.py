@@ -212,25 +212,6 @@ def optimize(n_clicks,disabled,pathname):
                 ),
               ], style={'border-radius': '50px','margin-right':'400px','margin-left': '400px', 'margin-bottom':'30px','background-color':"#777777", "color": "#ffffff", "padding-top": "1rem"}),
             ]),
-            html.H3("Initial Shopping List", className="display-5.5", style={'textAlign':'left','font-weight':'bold','backgroundColor':'#ffffff', 'border-bottom-style': 'solid', "color": "#fd624f", "padding-left":"1.5rem","padding-left":"1.5rem","padding-bottom":"1rem","margin-bottom": "1.5rem"}),
-            dbc.Row([  
-              dbc.Col([ 
-                  dcc.Graph(
-                      figure = fig2
-                  ),
-              ]),           
-              dbc.Col([
-                  html.P("Estimated picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold', "margin-bottom": "0px"}), 
-                  dbc.Alert(
-                      "{}".format(description["estimated_time"]), className="display-3", color="primary", style={'backgroundColor':'#ffffff','border-color':'#ffffff','textAlign':'center','font-weight':'bold', 'height':'100px', "padding-top":"0px"} 
-                      ),
-              ], style={'margin-top':'12px'}),#,'margin-bottom': '50px','margin-right':'50px','margin-left':'50px'}), 
-            ], style={'margin-bottom':'30px'}),    
-            html.H3("Timeline By Product", className="display-5.5", style={'textAlign':'left','font-weight':'bold','backgroundColor':'#ffffff', 'border-bottom-style': 'solid', "color": "#fd624f", "padding-left":"1.5rem","padding-left":"1.5rem","padding-bottom":"1rem","margin-bottom": "1.5rem"}),  
-            dcc.Graph(
-                id = 'marginal-plot',
-                figure = fig
-            ),
             html.H3("Final Shopping List", className="display-5.5", style={'textAlign':'left','font-weight':'bold','backgroundColor':'#ffffff', 'border-bottom-style': 'solid', "color": "#fd624f", "padding-left":"1.5rem","padding-left":"1.5rem","padding-bottom":"1rem","margin-bottom": "1.5rem"}),
             dbc.Row([
               dbc.Col([           
@@ -239,12 +220,17 @@ def optimize(n_clicks,disabled,pathname):
                 ),
             ]),
               dbc.Col([
-                html.P("Estimated picking time after sorting:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold', "margin-bottom": "0px"}), 
+                html.P("Estimated picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold', "margin-bottom": "0px"}), 
                 dbc.Alert(
-                "{}".format(int(sum(prods_picking_time))), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'}
+                "{} seg".format(int(sum(prods_picking_time))), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'}
               ),
               ], style={'margin-top':'12px'}),
-            ]),
+            ], style={'margin-bottom':'30px'}),
+            html.H3("Timeline By Product", className="display-5.5", style={'textAlign':'left','font-weight':'bold','backgroundColor':'#ffffff', 'border-bottom-style': 'solid', "color": "#fd624f", "padding-left":"1.5rem","padding-left":"1.5rem","padding-bottom":"1rem","margin-bottom": "1.5rem"}),  
+            dcc.Graph(
+                id = 'marginal-plot',
+                figure = fig
+            ),
         ]
         return content
 

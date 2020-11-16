@@ -183,7 +183,7 @@ def optimize(n_clicks,disabled,pathname):
         sorted_shopping_list, prods_picking_time = engine.optimization_answer_processing(shopping_list, map_cats_filtered, product_times, cat_map, product_categories)
         print(sorted_shopping_list)
 
-        fig = px.line(x=list(range(1,len(description["marginal_plot"])+1)),y= description["marginal_plot"].values(),template="plotly_white")
+        fig = px.line(x=list(range(1,len(prods_picking_time)+2)),y=[0]+prods_picking_time,template="plotly_white")
         fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":1},font=dict(size=18, color="#444444"))
         fig.update_traces(line_color='#FD624F')
 
@@ -222,7 +222,7 @@ def optimize(n_clicks,disabled,pathname):
               dbc.Col([
                 html.P("Estimated picking time:" ,className="display-4.5", style={'textAlign':'center','font-weight':'bold', "margin-bottom": "0px"}), 
                 dbc.Alert(
-                "{} seg".format(int(sum(prods_picking_time))), className="display-3", color="primary", style={'backgroundColor':'#bfff52','textAlign':'center','font-weight':'bold', 'height':'100px'}
+                "{} seg".format(int(sum(prods_picking_time))), className="display-3", color="primary", style={'backgroundColor':'#ffffff','border-color':'#ffffff','textAlign':'center','font-weight':'bold', 'height':'100px', "color":"#008540", "padding-bottom": "0px"}
               ),
               ], style={'margin-top':'12px'}),
             ], style={'margin-bottom':'30px'}),
@@ -236,7 +236,8 @@ def optimize(n_clicks,disabled,pathname):
 
     if pathname == "/cat_analysis":
         if pathname == "/cat_analysis":
-          fig5 = px.imshow(engine.get_eda())
+            heatmap = engine.get_eda()
+            fig5 = px.imshow(heatmap, labels={"x":"Current Category","y":"Next Catedory","color":"Time [s]"},x = list(heatmap.columns),y = list(heatmap.columns))
         return dcc.Graph(figure = fig5, style={'height': '800px'})
     return html.Img(src=app.get_asset_url('front_page.png'), style={"display": "block","margin-left": "auto","margin-right": "auto"})
 

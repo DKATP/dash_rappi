@@ -184,7 +184,15 @@ def optimize(n_clicks,disabled,pathname):
         print(sorted_shopping_list)
 
         fig = px.line(x=list(range(1,len(prods_picking_time)+2)),y=[0]+prods_picking_time,template="plotly_white")
-        fig.update_layout(yaxis={"title":"Time [s]"},xaxis={"title":"Product", "tick0":0, "dtick":1},font=dict(size=18, color="#444444"))
+        fig.update_layout(
+            yaxis={"title":"Time [s]"},
+            font=dict(size=18, color="#444444"),
+            xaxis = dict(
+                title = "Product",
+                tickmode = 'array',
+                tickangle=0,
+                tickvals = list(range(1,len(prods_picking_time)+2)),
+                ticktext = [product[:10] if len(product)>=10 else product for product in sorted_shopping_list]))
         fig.update_traces(line_color='#FD624F')
 
         df1=pd.DataFrame({'ORDER RECEIVED':shopping_list})
